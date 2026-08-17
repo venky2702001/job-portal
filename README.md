@@ -26,6 +26,7 @@ This project allows recruiters to post jobs, candidates to apply, and admins to 
 ---
 
 ## 📂 Project Structure
+```
 jobportal/
 │── accounts/        # User authentication and roles
 │── jobs/            # Job posting and management
@@ -33,7 +34,7 @@ jobportal/
 │── templates/       # HTML templates
 │── static/          # CSS, JS, images
 │── manage.py
-
+```
 ---
 
 ## ⚙️ Setup Instructions
