@@ -42,16 +42,19 @@ jobportal/
    ```bash
    git clone https://github.com/venky2702001/job-portal.git
    cd job-portal
-2.Create a virtual environment and install dependencies:
+   ```
+   2.Create a virtual environment and install dependencies:
+    ```
     python -m venv venv
     source venv/bin/activate   # On Windows: venv\Scripts\activate
     pip install -r requirements.txt
-3.Configure database settings in settings.py (MySQL).
-4.Run migrations:
-    python manage.py migrate
-5.Start the server:
-    python manage.py runserver
-6.Open http://127.0.0.1:8000/ in your browser.
+    ```
+   3.Configure database settings in settings.py (MySQL).\
+   4.Run migrations:\
+       ```python manage.py migrate```\
+   5.Start the server:\
+       ```python manage.py runserver```\
+   6.Open http://127.0.0.1:8000/ in your browser.
 ---
 ## 📸 Screenshots
 (Add screenshots of your UI once built)
