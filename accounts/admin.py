@@ -6,6 +6,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from .models import *
 import logging 
+from django.urls import reverse
 
 User = get_user_model()
 logger = logging.getLogger("recruiter_approvals")
@@ -33,7 +34,7 @@ def approve_recruiters(modeladmin, request, queryset):
 
         html_content = render_to_string("emails/recruiter_approved.html", {
             "username": user.username,
-            "portal_url": "http://127.0.0.1:8000/accounts/login/",
+            "portal_url": request.build_absolute_uri(reverse("accounts:login")),
         })
         text_content = f"Hello {user.username},\n\nYour recruiter account has been approved. You can now log in.\n\nBest regards,\nJobPortal Team"
 

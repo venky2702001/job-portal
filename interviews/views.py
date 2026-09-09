@@ -7,6 +7,7 @@ from .forms import InterviewForm
 from notifications.models import Notification
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from applications.utils import send_notification_email
 
 # Create your views here.
 # interviews/views.py
@@ -14,8 +15,6 @@ from channels.layers import get_channel_layer
 @login_required
 @recruiter_required
 def schedule_interview(request):
-    if request.user.role != "recruiter":
-        return render(request, "403.html", status=403)
      # Check if recruiter is rescheduling an existing interview
     reschedule_id = request.GET.get("reschedule")
     interview_instance = None
@@ -30,16 +29,23 @@ def schedule_interview(request):
             initial["job"] = request.GET.get("job")
 
     if request.method == "POST":
+        is_reschedule = interview_instance is not None
         form = InterviewForm(request.POST, instance=interview_instance, recruiter=request.user)
         if form.is_valid():
             interview = form.save(commit=False)
             interview.recruiter = request.user
             interview.save()
 
+            notif_message = (
+                f"Your interview for {interview.job.title} has been rescheduled to {interview.scheduled_at}."
+                if is_reschedule else
+                f"Interview scheduled for {interview.job.title} on {interview.scheduled_at}"
+            )
+
             # 🔔 Create notification in DB
             Notification.objects.create(
                 recipient=interview.candidate,
-                message=f"Interview scheduled for {interview.job.title} on {interview.scheduled_at}",
+                message=notif_message,
                 url=f"/interviews/candidate/"
             )
 
@@ -49,10 +55,27 @@ def schedule_interview(request):
                 f"user_{interview.candidate.id}",
                 {
                     "type": "notify",
-                    "message": f"Interview scheduled for {interview.job.title} on {interview.scheduled_at}",
+                    "message": notif_message,
                     "url": f"/interviews/candidate/"
                 }
             )
+
+            # 📧 Email the candidate too — WebSocket notifications are only
+            # seen if they're actively online, so this ensures they find out
+            # either way.
+            email_subject = (
+                f"Interview Rescheduled: {interview.job.title}"
+                if is_reschedule else
+                f"Interview Scheduled: {interview.job.title}"
+            )
+            email_body = (
+                f"Hello {interview.candidate.username},\n\n"
+                f"{notif_message}\n\n"
+                f"Location/Link: {interview.location or 'To be confirmed'}\n\n"
+                f"Best regards,\nJobPortal Team"
+            )
+            send_notification_email(email_subject, email_body, [interview.candidate.email])
+
             return redirect("interviews:recruiter_interviews")
     else:
         form = InterviewForm(instance=interview_instance, recruiter=request.user, initial=initial)
