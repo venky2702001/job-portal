@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h2 class="card-title">{{ job.title }}</h2>
+                <p class="text-muted mb-3">{{ job.company }} · {{ job.location }}
+                    {% if job.salary %} · Salary: {{ job.salary }}{% endif %}
+                </p>
+
+                <p>{{ job.description|linebreaksbr }}</p>
+
+                {% if job.skills_required %}
+                <p><strong>Skills Required:</strong> {{ job.skills_required }}</p>
+                {% endif %}
+
+                <hr>
+                <p class="mb-1 small text-muted">Posted by {{ job.recruiter.username }}</p>
+                {% if job.recruiter.recruiter_profile %}
+                    <p class="mb-1 small text-muted">
+                        {{ job.recruiter.recruiter_profile.company_name }}
+                        {% if job.recruiter.recruiter_profile.website %}
+                            · <a href="{{ job.recruiter.recruiter_profile.website }}" target="_blank">{{ job.recruiter.recruiter_profile.website }}</a>
+                        {% endif %}
+                    </p>
+                {% endif %}
+
+                <div class="mt-4 d-flex gap-2">
+                    {% if user.is_authenticated and user.role == 'candidate' %}
+                        <a class="btn btn-primary" href="{% url 'applications:apply_job' job.id %}">Apply Now</a>
+                        <a class="btn btn-outline-secondary" href="{% url 'applications:save_job' job.id %}">
+                            <i class="bi bi-bookmark"></i> Save for later
+                        </a>
+                    {% endif %}
+                    <a class="btn btn-outline-secondary" href="{% url 'jobs:job_list' %}">Back to Jobs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

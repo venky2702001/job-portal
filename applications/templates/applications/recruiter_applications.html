@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">Applications</h2>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="applied" {% if request.GET.status == "applied" %}selected{% endif %}>Applied</option>
+                    <option value="reviewed" {% if request.GET.status == "reviewed" %}selected{% endif %}>Reviewed</option>
+                    <option value="accepted" {% if request.GET.status == "accepted" %}selected{% endif %}>Accepted</option>
+                    <option value="rejected" {% if request.GET.status == "rejected" %}selected{% endif %}>Rejected</option>
+                    <option value="hired" {% if request.GET.status == "hired" %}selected{% endif %}>Hired</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <select name="job" class="form-select">
+                    <option value="">All Jobs</option>
+                    {% for job in jobs %}
+                        <option value="{{ job.id }}" {% if request.GET.job == job.id|stringformat:"s" %}selected{% endif %}>{{ job.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <ul class="list-group list-group-flush">
+        {% for app in applications %}
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span>{{ app.candidate.username }} applied for <strong>{{ app.job.title }}</strong></span>
+                    <span class="badge bg-info">{{ app.get_status_display }}</span>
+                </div>
+                {% if app.candidate.candidate_profile.resume %}
+                    <a href="{{ app.candidate.candidate_profile.resume.url }}" target="_blank"
+                       class="btn btn-sm btn-outline-secondary mt-2">
+                        Download Resume
+                    </a>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li class="list-group-item text-muted">No applications found.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">Search Candidates</h2>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="q" class="form-control" placeholder="Search skills or bio" value="{{ query }}">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="location" class="form-control" placeholder="Location" value="{{ location }}">
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">-- Application Status --</option>
+                    <option value="applied" {% if status == "applied" %}selected{% endif %}>Applied</option>
+                    <option value="reviewed" {% if status == "reviewed" %}selected{% endif %}>Reviewed</option>
+                    <option value="accepted" {% if status == "accepted" %}selected{% endif %}>Accepted</option>
+                    <option value="rejected" {% if status == "rejected" %}selected{% endif %}>Rejected</option>
+                    <option value="hired" {% if status == "hired" %}selected{% endif %}>Hired</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for candidate in candidates %}
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-1">{{ candidate.user.username }}</h5>
+                    <p class="text-muted small mb-2">{{ candidate.location|default:"Location not set" }}</p>
+                    <p class="mb-2"><strong>Skills:</strong> {{ candidate.skills|default:"—" }}</p>
+                    {% if candidate.location or candidate.skills %}
+                        <p class="text-muted small mb-0">Full resume access available once this candidate applies to one of your jobs.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-light border text-center">No candidates found.</div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Candidate Dashboard</h2>
+  <a href="{% url 'jobs:job_list' %}" class="btn btn-primary"><i class="bi bi-search"></i> Browse Jobs</a>
+</div>
+
+<!-- Profile Completion -->
+<div class="card mb-3 shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">Profile Completion</h5>
+    <div class="progress" style="height: 1.5rem;">
+      <div class="progress-bar bg-success" role="progressbar"
+           data-completion="{{ completion }}%"
+           aria-valuenow="{{ completion }}" aria-valuemin="0" aria-valuemax="100">
+        {{ completion }}%
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <!-- Profile -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Your Profile</h5>
+        {% if user.candidate_profile %}
+          <p class="mb-1"><strong>Skills:</strong> {{ user.candidate_profile.skills|default:"—" }}</p>
+          <p class="mb-1"><strong>Bio:</strong> {{ user.candidate_profile.bio|default:"—" }}</p>
+          {% if user.candidate_profile.resume %}
+            <p class="mb-2"><strong>Resume:</strong> <a href="{{ user.candidate_profile.resume.url }}">Download</a></p>
+          {% endif %}
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:edit_candidate_profile' %}">Edit Profile</a>
+        {% else %}
+          <p>No profile yet. <a href="{% url 'accounts:edit_candidate_profile' %}">Create Profile</a></p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Messages</h5>
+        <p>You have <strong>{{ unread_count }}</strong> unread message{{ unread_count|pluralize }}.</p>
+        <a class="btn btn-sm btn-primary" href="{% url 'messaging:inbox' %}">Go to Inbox</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upcoming Interviews -->
+<div class="card mb-3 shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0"><i class="bi bi-calendar-event"></i> Upcoming Interviews</h5>
+      <a href="{% url 'interviews:candidate_interviews' %}" class="small">View all</a>
+    </div>
+    <ul class="list-group list-group-flush mt-2">
+      {% for interview in upcoming_interviews %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span>{{ interview.job.title }} — {{ interview.scheduled_at }}</span>
+          <span class="badge
+              {% if interview.status == 'confirmed' %} bg-success
+              {% elif interview.status == 'declined' %} bg-danger
+              {% elif interview.status == 'reschedule' %} bg-warning text-dark
+              {% else %} bg-info text-dark {% endif %}">
+            {{ interview.get_status_display }}
+          </span>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">No upcoming interviews.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- Applications -->
+<div class="card mb-3 shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0">Your Applications</h5>
+      <a href="{% url 'applications:application_history' %}" class="small">View history</a>
+    </div>
+    <ul class="list-group list-group-flush mt-2">
+      {% for app in applications %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span>{{ app.job.title }} at {{ app.job.company }}</span>
+          <span class="badge bg-info">{{ app.get_status_display }}</span>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">You haven't applied to any jobs yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <!-- Recommended Jobs -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Recommended Jobs</h5>
+        <ul class="list-group list-group-flush">
+          {% for job in recommended_jobs %}
+            <li class="list-group-item">
+              {{ job.title }} at {{ job.company }}
+              <div class="text-muted small">Skills: {{ job.skills_required }}</div>
+            </li>
+          {% empty %}
+            <li class="list-group-item text-muted">No recommended jobs at the moment.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Jobs -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">My Saved Jobs</h5>
+        <ul class="list-group list-group-flush">
+          {% for saved in saved_jobs %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              {{ saved.job.title }} at {{ saved.job.company }}
+              <a href="{% url 'applications:remove_saved_job' saved.job.id %}" class="btn btn-sm btn-outline-danger">Remove</a>
+            </li>
+          {% empty %}
+            <li class="list-group-item text-muted">No saved jobs yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notifications -->
+<div class="card mb-3 shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">Recent Notifications</h5>
+    <ul class="list-group list-group-flush">
+      {% for note in notifications %}
+        <li class="list-group-item {% if not note.is_read %}fw-bold{% endif %}">
+          {{ note.message }}
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">No notifications.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- Real-time Job Alerts -->
+<div id="alerts"></div>
+<script>
+  document.querySelectorAll('[data-completion]').forEach(function(progressBar) {
+    progressBar.style.width = progressBar.dataset.completion + '%';
+  });
+
+  const socket = new WebSocket("ws://" + window.location.host + "/ws/job-alerts/");
+  socket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    const alertsDiv = document.getElementById("alerts");
+    alertsDiv.innerHTML += `<div class="alert alert-info">
+        New Job: ${data.title} at ${data.company} (${data.location})
+    </div>`;
+  };
+</script>
+{% endblock %}

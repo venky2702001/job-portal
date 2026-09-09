@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Available Jobs</h2>
+
+<!-- Search + Sort Form -->
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input type="text" name="q" class="form-control" placeholder="Keyword (e.g. Developer)"
+               value="{{ request.GET.q }}">
+    </div>
+    <div class="col-md-3">
+        <input type="text" name="location" class="form-control" placeholder="Location"
+               value="{{ request.GET.location }}">
+    </div>
+    <div class="col-md-3">
+        <input type="text" name="company" class="form-control" placeholder="Company"
+               value="{{ request.GET.company }}">
+    </div>
+    <div class="col-md-2">
+        <select name="sort" class="form-select">
+            <option value="date" {% if request.GET.sort == "date" %}selected{% endif %}>Newest</option>
+            <option value="company" {% if request.GET.sort == "company" %}selected{% endif %}>Company</option>
+            <option value="title" {% if request.GET.sort == "title" %}selected{% endif %}>Title</option>
+        </select>
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-primary w-100">Go</button>
+    </div>
+</form>
+
+<!-- Job Results -->
+<ul class="list-group">
+    {% for job in page_obj %}
+        <li class="list-group-item">
+            <strong><a href="{% url 'jobs:job_detail' job.id %}">{{ job.title }}</a></strong>
+            at {{ job.company }} ({{ job.location }})
+            <br>
+            Posted by: {{ job.recruiter.username }}
+            {% if job.recruiter.recruiter_profile %}
+                - {{ job.recruiter.recruiter_profile.company_name }}
+                ({{ job.recruiter.recruiter_profile.website }})
+            {% endif %}
+            {% if user.is_authenticated and user.role == 'candidate' %}
+                <a class="btn btn-sm btn-primary float-end ms-2" href="{% url 'applications:apply_job' job.id %}">Apply</a>
+                <a class="btn btn-sm btn-outline-secondary float-end" href="{% url 'applications:save_job' job.id %}" title="Save for later">
+                    <i class="bi bi-bookmark"></i>
+                </a>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li class="list-group-item">
+            No jobs found.
+            {% if user.is_authenticated and user.role == 'recruiter' %}
+                <br><small>You can <a href="{% url 'jobs:job_create' %}">post a job</a>.</small>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+
+<!-- Pagination Controls -->
+<nav aria-label="Page navigation" class="mt-3">
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" aria-label="Previous"
+                   href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&location={{ request.GET.location }}&company={{ request.GET.company }}&sort={{ request.GET.sort }}">
+                   Previous
+                </a>
+            </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" aria-label="Next"
+                   href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&location={{ request.GET.location }}&company={{ request.GET.company }}&sort={{ request.GET.sort }}">
+                   Next
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+
+{% if user.is_authenticated and user.role == 'recruiter' %}
+    <a class="btn btn-success mt-3" href="{% url 'jobs:job_create' %}">Post a Job</a>
+{% endif %}
+{% endblock %}

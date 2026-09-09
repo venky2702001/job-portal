@@ -14,9 +14,27 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+
+from jobs import views as job_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('accounts.urls')),
+    path('jobs/', include('jobs.urls')),
+    path('applications/', include('applications.urls')),
+    path('messaging/', include('messaging.urls')),
+    path('interviews/', include('interviews.urls')),
+    path('notifications/', include('notifications.urls')),
+    path('', job_views.job_list, name='home'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+admin.site.site_header = "Job Portal Administration"
+admin.site.site_title = "Job Portal Admin"
+admin.site.index_title = "Welcome to the Job Portal Admin"

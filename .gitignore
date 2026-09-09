@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+
+# Virtual environment
+venv/
+env/
+
+# Django stuff
+*.pot
+*.pyc
+db.sqlite3
+media/
+staticfiles/
+resumes/
+
+# Environment variables (NEVER commit secrets)
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS files
+Thumbs.db
+.DS_Store

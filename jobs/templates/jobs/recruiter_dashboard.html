@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Recruiter Dashboard</h2>
+  <div class="d-flex gap-2">
+    <a href="{% url 'jobs:job_create' %}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Post a Job</a>
+    <a href="{% url 'interviews:schedule_interview' %}" class="btn btn-outline-primary"><i class="bi bi-calendar-plus"></i> Schedule Interview</a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card shadow-sm text-center h-100">
+      <div class="card-body">
+        <div class="fs-3 fw-bold text-primary">{{ jobs_posted_count }}</div>
+        <div class="text-muted small">Jobs Posted</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card shadow-sm text-center h-100">
+      <div class="card-body">
+        <div class="fs-3 fw-bold text-info">{{ active_candidates_count }}</div>
+        <div class="text-muted small">Active Candidates</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card shadow-sm text-center h-100">
+      <div class="card-body">
+        <div class="fs-3 fw-bold text-success">{{ hires_count }}</div>
+        <div class="text-muted small">Hires</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card shadow-sm text-center h-100">
+      <a href="{% url 'messaging:inbox' %}" class="text-decoration-none">
+        <div class="card-body">
+          <div class="fs-3 fw-bold text-danger">{{ unread_messages }}</div>
+          <div class="text-muted small">Unread Messages</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Posted Jobs -->
+<div class="card mb-3 shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">Your Posted Jobs</h5>
+    <ul class="list-group list-group-flush">
+      {% for job in jobs %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span>{{ job.title }} <span class="text-muted">— {{ job.company }}</span></span>
+          <div class="d-flex gap-1">
+            <a href="{% url 'jobs:job_edit' job.id %}" class="btn btn-sm btn-outline-warning">Edit</a>
+            <a href="{% url 'jobs:job_delete' job.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+          </div>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">No jobs posted yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- Applications Received -->
+<div class="card mb-3 shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">Applications Received</h5>
+    <ul class="list-group list-group-flush">
+      {% for app in applications %}
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <strong>{{ app.candidate.username }}</strong> applied for <em>{{ app.job.title }}</em>
+              <div class="text-muted small">Applied {{ app.applied_at|date:"Y-m-d H:i" }}</div>
+            </div>
+            <span class="badge bg-info">{{ app.get_status_display }}</span>
+          </div>
+
+          {% if app.candidate.candidate_profile %}
+            <div class="small mt-2">
+              <strong>Skills:</strong> {{ app.candidate.candidate_profile.skills|default:"—" }}
+              {% if app.candidate.candidate_profile.resume %}
+                · <a href="{% url 'accounts:download_resume' app.candidate.candidate_profile.id %}">Download resume</a>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
+            <!-- Status update form -->
+            <form method="post" action="{% url 'applications:update_status' app.id %}" class="d-flex gap-2">
+              {% csrf_token %}
+              <select name="status" class="form-select form-select-sm" style="width: auto;">
+                {% for key, value in app.STATUS_CHOICES %}
+                  <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ value }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-sm btn-primary">Update</button>
+            </form>
+
+            <a href="{% url 'interviews:schedule_interview' %}?candidate={{ app.candidate.id }}&job={{ app.job.id }}"
+               class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-calendar-plus"></i> Schedule Interview
+            </a>
+          </div>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">No applications yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- Notifications -->
+<div class="card mb-3 shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">Recent Notifications</h5>
+    <ul class="list-group list-group-flush">
+      {% for note in notifications %}
+        <li class="list-group-item {% if not note.is_read %}fw-bold{% endif %}">
+          {{ note.message }}
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">No notifications.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

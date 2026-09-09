@@ -9,23 +9,33 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
 from pathlib import Path
-
+from dotenv import load_dotenv
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-swn@n^bq1u6#^$hs*!g5fyvr=24_+hb61a10hjcn+*0ly^ts5u'
-
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "fallback-secret")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+
+# Render sets this automatically to your service's *.onrender.com hostname —
+# trust it without having to hardcode it into DJANGO_ALLOWED_HOSTS.
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS = [f"https://{RENDER_EXTERNAL_HOSTNAME}"]
+
+# Render terminates TLS at its proxy and forwards plain HTTP internally;
+# without this Django would think every request is insecure.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -37,10 +47,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary_storage',
+    'cloudinary',
+    'accounts',
+    'jobs',
+    'applications',
+    'channels',
+    'messaging',
+    'interviews',
+    'notifications',
 ]
+AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -54,13 +75,14 @@ ROOT_URLCONF = 'jobportal.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'notifications.context_processors.unread_notifications_count',
             ],
         },
     },
@@ -74,10 +96,22 @@ WSGI_APPLICATION = 'jobportal.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get("DB_NAME", "job_portal"),
+        'USER': os.environ.get("DB_USER", "root"),
+        'PASSWORD': os.environ.get("DB_PASS", ""),
+        'HOST': os.environ.get("DB_HOST", "127.0.0.1"),
+        'PORT': os.environ.get("DB_PORT", "3306"),
     }
 }
+
+# TiDB Cloud (and most managed MySQL providers) require TLS.
+# Set DB_SSL_REQUIRED=True in your environment (e.g. on Render) to enable it;
+# leave it unset for a plain local MySQL instance.
+if os.environ.get("DB_SSL_REQUIRED", "False") == "True":
+    DATABASES['default']['OPTIONS'] = {
+        'ssl': {'ca': os.environ.get("DB_SSL_CA", "/etc/ssl/certs/ca-certificates.crt")}
+    }
 
 
 # Password validation
@@ -115,8 +149,84 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudinary config for resume storage. Hosts like Render have an
+# ephemeral filesystem — anything saved locally is lost on every
+# restart/redeploy — so resumes are stored on Cloudinary in production.
+# Leave CLOUDINARY_CLOUD_NAME unset for local dev and files save to disk as before.
+CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME")
+if CLOUDINARY_CLOUD_NAME:
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+        'API_KEY': os.environ.get("CLOUDINARY_API_KEY"),
+        'API_SECRET': os.environ.get("CLOUDINARY_API_SECRET"),
+    }
+
+STORAGES = {
+    "default": {
+        "BACKEND": (
+            "cloudinary_storage.storage.RawMediaCloudinaryStorage"
+            if CLOUDINARY_CLOUD_NAME
+            else "django.core.files.storage.FileSystemStorage"
+        ),
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL='noreply@jobportal.com'
+else:
+    # ✅ Email settings from environment
+    EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp-relay.brevo.com")
+    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+    EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+    EMAIL_HOST_USER = os.environ.get("EMAIL_USER", "")
+    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASS", "")
+    DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@jobportal.com")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@jobportal.com")
+
+ADMIN_SITE_HEADER = "Job Portal Administration"
+ADMIN_SITE_TITLE = "Job Portal Admin"
+ADMIN_INDEX_TITLE = "Welcome to the Job Portal Admin"
+
+
+ASGI_APPLICATION = 'jobportal.asgi.application'
+
+# Channels layer (using in‑memory for dev; use Redis in production)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": "recruiter_approvals.log",
+        },
+    },
+    "loggers": {
+        "recruiter_approvals": {
+            "handlers": ["file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
+}
