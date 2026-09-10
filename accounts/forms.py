@@ -1,7 +1,7 @@
 from django import forms
 from .models import CandidateProfile, RecruiterProfile
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import *
 from jobportal.formutils import BootstrapFormMixin
 User = get_user_model()
 
@@ -49,3 +49,9 @@ class RecruiterSignupForm(BootstrapFormMixin, UserCreationForm):
                 user=user, company_name=self.cleaned_data["company"]
             )
         return user
+class StyledPasswordResetForm(BootstrapFormMixin, PasswordResetForm):
+    pass
+
+
+class StyledSetPasswordForm(BootstrapFormMixin, SetPasswordForm):
+    pass
