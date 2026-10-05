@@ -1,51 +1,53 @@
 {% extends 'base.html' %}
+{% block title %}Find Candidates | Job Portal{% endblock %}
 {% block content %}
-<h2 class="mb-4">Search Candidates</h2>
+<h2 class="mb-4"><i class="bi bi-search me-2"></i>Search Candidates</h2>
 
-<div class="card shadow-sm mb-3">
-    <div class="card-body">
-        <form method="get" class="row g-2">
-            <div class="col-md-4">
-                <input type="text" name="q" class="form-control" placeholder="Search skills or bio" value="{{ query }}">
-            </div>
-            <div class="col-md-3">
-                <input type="text" name="location" class="form-control" placeholder="Location" value="{{ location }}">
-            </div>
-            <div class="col-md-3">
-                <select name="status" class="form-select">
-                    <option value="">-- Application Status --</option>
-                    <option value="applied" {% if status == "applied" %}selected{% endif %}>Applied</option>
-                    <option value="reviewed" {% if status == "reviewed" %}selected{% endif %}>Reviewed</option>
-                    <option value="accepted" {% if status == "accepted" %}selected{% endif %}>Accepted</option>
-                    <option value="rejected" {% if status == "rejected" %}selected{% endif %}>Rejected</option>
-                    <option value="hired" {% if status == "hired" %}selected{% endif %}>Hired</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Search</button>
-            </div>
-        </form>
+<form method="get" class="row g-2 mb-4 bg-white p-3 rounded-3 shadow-sm">
+    <div class="col-md-4">
+        <input type="text" name="q" class="form-control" placeholder="Search skills or bio" value="{{ query }}">
     </div>
-</div>
+    <div class="col-md-3">
+        <input type="text" name="location" class="form-control" placeholder="Location" value="{{ location }}">
+    </div>
+    <div class="col-md-3">
+        <select name="status" class="form-select">
+            <option value="">-- Application Status --</option>
+            <option value="applied" {% if status == "applied" %}selected{% endif %}>Applied</option>
+            <option value="reviewed" {% if status == "reviewed" %}selected{% endif %}>Reviewed</option>
+            <option value="accepted" {% if status == "accepted" %}selected{% endif %}>Accepted</option>
+            <option value="rejected" {% if status == "rejected" %}selected{% endif %}>Rejected</option>
+            <option value="hired" {% if status == "hired" %}selected{% endif %}>Hired</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+</form>
 
-<div class="row g-3">
+{% if candidates %}
+<div class="row row-cols-1 row-cols-md-2 g-3">
     {% for candidate in candidates %}
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
-                    <h5 class="card-title mb-1">{{ candidate.user.username }}</h5>
-                    <p class="text-muted small mb-2">{{ candidate.location|default:"Location not set" }}</p>
+                    <h5 class="card-title"><i class="bi bi-person-circle me-1"></i>{{ candidate.user.username }}</h5>
+                    <p class="text-muted mb-1"><i class="bi bi-geo-alt me-1"></i>{{ candidate.location|default:"Location not set" }}</p>
                     <p class="mb-2"><strong>Skills:</strong> {{ candidate.skills|default:"—" }}</p>
-                    {% if candidate.location or candidate.skills %}
-                        <p class="text-muted small mb-0">Full resume access available once this candidate applies to one of your jobs.</p>
+                    {% if candidate.resume %}
+                        <a href="{{ candidate.resume.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-download me-1"></i>Download Resume
+                        </a>
                     {% endif %}
                 </div>
             </div>
         </div>
-    {% empty %}
-        <div class="col-12">
-            <div class="alert alert-light border text-center">No candidates found.</div>
-        </div>
     {% endfor %}
 </div>
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-people"></i>
+    No candidates found.
+</div>
+{% endif %}
 {% endblock %}

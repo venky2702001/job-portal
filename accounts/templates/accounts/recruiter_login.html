@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Recruiter Login | Job Portal{% endblock %}
+{% block content %}
+<div class="form-card">
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h2 class="mb-1 text-center"><i class="bi bi-building me-2"></i>Recruiter Login</h2>
+            <p class="text-muted text-center mb-4">Hiring? Sign in to manage your job postings.</p>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+            <p class="text-center mt-3 mb-0">
+                <a href="{% url 'accounts:password_reset' %}">Forgot password?</a>
+            </p>
+            <p class="text-center mt-3 mb-1">New recruiter? <a href="{% url 'accounts:recruiter_signup' %}">Register your company</a></p>
+            <p class="text-center mb-0"><small class="text-muted">Looking for a job instead? <a
+                        href="{% url 'accounts:login' %}">Candidate login</a></small></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

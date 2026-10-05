@@ -16,6 +16,19 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         pass
 
     async def send_notification(self, event):
+       await self.send(text_data=json.dumps({
+           "type": "notify",
+           "message": event["message"],
+           "url": event.get("url", ""),
+           "id": event.get("id"),
+       }))
+    async def read(self, event):
         await self.send(text_data=json.dumps({
-            'message': event['message']
-        }))
+        "type": "read",
+        "id": event.get("id"),
+    }))
+
+    async def read_all(self, event):
+        await self.send(text_data=json.dumps({
+        "type": "read_all",
+    }))

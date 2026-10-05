@@ -2,6 +2,8 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib import messages
 from django.http import FileResponse, HttpResponseForbidden
 from applications.models import Application
 from jobportal import settings
@@ -40,6 +42,25 @@ def login_view(request):
     else:
         form = StyledAuthenticationForm()
     return render(request, 'accounts/login.html', {'form': form})
+def recruiter_login_view(request):
+    """Recruiter login. Candidate accounts are redirected to the candidate login page."""
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            if user.role != 'recruiter':
+                messages.error(
+                    request,
+                    "That's not a recruiter account. Please use the candidate login page instead."
+                )
+            else:
+                login(request, user)
+                return redirect("jobs:recruiter_dashboard")
+    else:
+        form = AuthenticationForm()
+    return render(request, 'accounts/recruiter_login.html', {'form': form})
+
+
 @login_required
 def logout_view(request):
     logout(request)

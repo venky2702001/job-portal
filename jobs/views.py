@@ -13,13 +13,13 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 
-@login_required
 
 def job_list(request):
-    if request.user.role == 'recruiter':
-        return redirect('jobs:recruiter_dashboard')
-    if request.user.role == 'admin':
-        return redirect('admin:index')
+    if request.user.is_authenticated:
+        if request.user == 'recruiter':
+            return redirect('jobs:recruiter_dashboard')
+        if request.user.is_staff:
+            return redirect('admin:index')
     query = request.GET.get('q')
     location = request.GET.get('location')
     company = request.GET.get('company')

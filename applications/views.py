@@ -4,15 +4,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
-
+from django.urls import reverse
 from notifications.models import Notification
-from .utils import send_notification_email
+from .utils import *
 from .models import *
 from .forms import ApplicationForm
 from django.conf import settings
 from jobs.models import Job
 from interviews.models import Interview
-from .utils import recommend_jobs_for_candidate
+
 from accounts.utils import recruiter_required,candidate_required
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -118,10 +118,14 @@ def update_status(request, app_id):
             application.status = new_status
             application.save()
 
+            msg = f"Your application for {application.job.title} is now {application.get_status_display()}."
+            url = reverse("applications:application_history")
+
             # 1️⃣ Create DB notification
-            Notification.objects.create(
+            note = Notification.objects.create(
                 recipient=application.candidate,
-                message=f"Your application for {application.job.title} is now {application.get_status_display()}."
+                message=msg,
+                url=url,
             )
 
             # 2️⃣ Send real-time notification via WebSocket
@@ -130,7 +134,9 @@ def update_status(request, app_id):
                 f"user_{application.candidate.id}",
                 {
                     "type": "send_notification",
-                    "message": f"Your application for {application.job.title} is now {application.get_status_display()}."
+                    "message": msg,
+                    "url": url,
+                    "id": note.id,
                 }
             )
 

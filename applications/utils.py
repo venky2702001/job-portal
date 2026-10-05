@@ -22,5 +22,3 @@ def recommend_jobs_for_candidate(candidate_profile):
         recommended_jobs = recommended_jobs | matches
 
     return recommended_jobs.distinct()
-
-

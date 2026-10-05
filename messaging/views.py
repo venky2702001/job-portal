@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from notifications.models import Notification
 from .models import Message
@@ -50,7 +51,14 @@ def send_message(request):
 
 @login_required
 def message_detail(request, message_id):
-    message = get_object_or_404(Message, id=message_id, recipient=request.user)
-    message.is_read = True
-    message.save()
+    message = get_object_or_404(Message, id=message_id)
+    if request.user not in (message.sender, message.recipient):
+        return HttpResponseForbidden("You do not have permission to view this message.")
+
+    # Only mark as read when the actual recipient views it — not when the
+    # sender looks at their own sent message.
+    if request.user == message.recipient and not message.is_read:
+        message.is_read = True
+        message.save()
+
     return render(request, "messaging/message_detail.html", {"message": message})

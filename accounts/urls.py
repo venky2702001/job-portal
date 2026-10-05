@@ -7,6 +7,7 @@ app_name = 'accounts'
 urlpatterns = [
     path('signup/', views.signup_view, name='signup'),
     path('login/', views.login_view, name='login'),
+    path('recruiter-login/', views.recruiter_login_view, name='recruiter_login'),
     path('logout/', views.logout_view, name='logout'),
     path('candidate/profile/',views.edit_candidate_profile,name='edit_candidate_profile'),
     path('recruiter/profile/',views.edit_recruiter_profile,name='edit_recruiter_profile'),

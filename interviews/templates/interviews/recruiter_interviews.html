@@ -1,63 +1,47 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0"><i class="bi bi-calendar-week"></i> My Scheduled Interviews</h2>
-    <a href="{% url 'interviews:schedule_interview' %}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Schedule Interview
-    </a>
-</div>
+<div class="container mt-4">
+    <h2>My Scheduled Interviews</h2>
+    <ul class="list-group">
+        {% for interview in interviews %}
+            <li class="list-group-item">
+                <strong>{{ interview.job.title }}</strong> 
+                with <span class="text-primary">{{ interview.candidate.username }}</span>
+                <br>
+                Scheduled: {{ interview.scheduled_at }} at {{ interview.location }}
+                <br>
+                Status: 
+                <span class="badge 
+                    {% if interview.status == 'confirmed' %} bg-success 
+                    {% elif interview.status == 'declined' %} bg-danger 
+                    {% elif interview.status == 'reschedule' %} bg-warning 
+                    {% else %} bg-info {% endif %}">
+                    {{ interview.get_status_display }}
+                </span>
+                {% if interview.notes %}
+                    <br><small class="text-muted">Notes: {{ interview.notes }}</small>
+                {% endif %}
 
-<div class="row g-3">
-    {% for interview in interviews %}
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <h5 class="card-title mb-1">{{ interview.job.title }}</h5>
-                        <span class="badge
-                            {% if interview.status == 'confirmed' %} bg-success
-                            {% elif interview.status == 'declined' %} bg-danger
-                            {% elif interview.status == 'reschedule' %} bg-warning text-dark
-                            {% else %} bg-info text-dark {% endif %}">
-                            {{ interview.get_status_display }}
-                        </span>
-                    </div>
-                    <p class="card-text text-muted mb-1">
-                        with <span class="text-primary fw-semibold">{{ interview.candidate.username }}</span>
-                    </p>
-                    <p class="card-text text-muted mb-1">
-                        <i class="bi bi-clock"></i> {{ interview.scheduled_at }}
-                    </p>
-                    {% if interview.location %}
-                    <p class="card-text text-muted mb-1">
-                        <i class="bi bi-geo-alt"></i> {{ interview.location }}
-                    </p>
-                    {% endif %}
-                    {% if interview.notes %}
-                    <p class="card-text small text-muted">Notes: {{ interview.notes }}</p>
-                    {% endif %}
-
-                    <div class="mt-3 d-flex gap-2">
-                        {% if interview.status != 'confirmed' %}
-                        <a href="{% url 'interviews:update_interview_status' interview.id 'confirmed' %}"
-                           class="btn btn-sm btn-success">Confirm</a>
-                        {% endif %}
-                        {% if interview.status != 'declined' %}
-                        <a href="{% url 'interviews:update_interview_status' interview.id 'declined' %}"
-                           class="btn btn-sm btn-outline-danger">Decline</a>
-                        {% endif %}
-                        <a href="{% url 'interviews:schedule_interview' %}?reschedule={{ interview.id }}"
-                           class="btn btn-sm btn-outline-warning">Reschedule</a>
-                    </div>
+                <!-- Action buttons -->
+                <div class="mt-2 d-flex gap-2">
+                    <form method="post" action="{% url 'interviews:update_interview_status' interview.id 'confirmed' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm" {% if interview.status == 'confirmed' %}disabled{% endif %}>Confirm</button>
+                    </form>
+                    <form method="post" action="{% url 'interviews:update_interview_status' interview.id 'declined' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm" {% if interview.status == 'declined' %}disabled{% endif %}>Decline</button>
+                    </form>
+                    <form method="post" action="{% url 'interviews:update_interview_status' interview.id 'reschedule' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning btn-sm" {% if interview.status == 'reschedule' %}disabled{% endif %}>Reschedule</button>
+                    </form>
+                    <a href="{% url 'interviews:schedule_interview' %}?reschedule={{ interview.id }}" class="btn btn-outline-secondary btn-sm">Edit Details</a>
                 </div>
-            </div>
-        </div>
-    {% empty %}
-        <div class="col-12">
-            <div class="alert alert-light border text-center">
-                No interviews scheduled yet. <a href="{% url 'interviews:schedule_interview' %}">Schedule one</a>.
-            </div>
-        </div>
-    {% endfor %}
+            </li>
+        {% empty %}
+            <li class="list-group-item">No interviews scheduled yet.</li>
+        {% endfor %}
+    </ul>
 </div>
 {% endblock %}
