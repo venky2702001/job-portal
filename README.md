@@ -1,145 +1,135 @@
-# Job Portal
+# JobPortal
 
-A full-stack job application platform built with **Django, Django Channels (WebSockets), MySQL, Bootstrap, and JavaScript**. Recruiters post jobs and manage hiring pipelines, candidates discover and apply for roles, and admins oversee the whole platform — all in real time.
+A full-stack job application platform built with **Django, Django Channels, MySQL and Bootstrap**. Recruiters post jobs and manage applicants, candidates search and apply, and admins oversee users and jobs, with real-time notifications and messaging between them.
 
-🔗 **Live:** [job-portal-dn0u.onrender.com](https://job-portal-dn0u.onrender.com)
-💻 **Repo:** [github.com/venky2702001/job-portal](https://github.com/venky2702001/job-portal)
+**Live demo:** https://job-portal-dn0u.onrender.com
 
----
-
-## 🚀 Features
-
-**Accounts & Roles**
-- Role-based accounts for Candidates, Recruiters, and Admins, each with a dedicated dashboard
-- Separate login pages for candidates and recruiters, with role-mismatch protection
-- Recruiter signups require admin approval before activation
-
-**For Candidates**
-- Browse and search jobs (public — no login required to view listings)
-- Apply to jobs with resume upload
-- Save jobs for later, with a dedicated "Saved Jobs" list
-- Track applications through a 5-stage pipeline: Applied → Reviewed → Accepted / Rejected → Hired
-- Manage interview invites — confirm, decline, or request a reschedule
-- Real-time in-app notifications and messaging (no page refresh needed)
-
-**For Recruiters**
-- Post, edit, and delete job listings (with skill-tag matching for recommendations)
-- Review applications per job, with resume downloads
-- Search and filter candidates by skill, location, and application status
-- Schedule interviews and track their status
-- Analytics dashboard — applications by status and by job posting
-
-**For Admins**
-- Approve or reject pending recruiter accounts
-- Platform-wide analytics (jobs, applications, candidates)
-- Full Django admin access
-
-**Under the hood**
-- Real-time notifications & messaging via Django Channels / WebSockets
-- MySQL relational schema across 6 Django apps (accounts, jobs, applications, interviews, messaging, notifications)
-- Responsive Bootstrap 5 UI with Bootstrap Icons
-- Deployed on Render, static files served via WhiteNoise
+> The demo runs on a free Render instance, so the first load can take up to a minute to wake up.
 
 ---
 
-## 🛠️ Tech Stack
-- **Frontend:** HTML, CSS, Bootstrap 5, JavaScript (WebSocket client for live updates)
-- **Backend:** Python, Django, Django Channels (ASGI/Daphne)
-- **Database:** MySQL
-- **Static files:** WhiteNoise
-- **Version Control:** Git & GitHub
-- **Deployment:** Render
+## Features
+
+**Role-based access (Candidate, Recruiter, Admin)**
+- Separate signup/login flows and dashboards, protected by permission checks
+
+**For candidates**
+- Browse and search jobs, save jobs for later, and apply with a resume upload
+- Skill-based job recommendations
+- Dashboard with profile completion, applications, saved jobs and upcoming interviews
+- Application history with the current status of each application
+- Confirm, decline or reschedule interview invitations
+
+**For recruiters**
+- Post and manage jobs
+- Review applications and move them through the pipeline: Applied → Reviewed → Accepted / Rejected / Hired
+- Search candidates by skill and location
+- Analytics dashboard (applications by status and by job)
+- Schedule interviews
+
+**Real-time notifications and messaging**
+- Live notification bell with unread badge, powered by Django Channels (WebSockets)
+- Mark a notification, or all notifications, as read; changes sync across open tabs
+- In-app messaging (inbox, sent, compose)
+- Email notifications for new applications and status changes
 
 ---
 
-## 📂 Project Structure
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Backend | Python, Django 5.2 |
+| Real-time | Django Channels (WebSockets) |
+| Database | MySQL |
+| Frontend | HTML, CSS, Bootstrap 5, JavaScript |
+| Deployment | Render |
+| Version control | Git, GitHub |
+
+---
+
+## Project Structure
+
 ```
-jobportal/
-│── accounts/         # Auth, roles, candidate/recruiter profiles, admin approval
-│── jobs/             # Job posting, listing, search
-│── applications/     # Applications, saved jobs, recruiter analytics
-│── interviews/       # Interview scheduling & status tracking
-│── messaging/        # In-app messaging between users
-│── notifications/    # Real-time notifications (Django Channels)
-│── templates/        # Shared templates (base layout, email templates, 403 page)
-│── static/           # CSS, JS, images
-│── jobportal/        # Project settings, URLs, ASGI/WSGI, Channels routing
-│── manage.py
+job-portal/
+├── accounts/        # Authentication, roles, candidate/recruiter profiles
+├── jobs/            # Job posting, search and listing
+├── applications/    # Applications, status tracking, saved jobs, dashboards
+├── interviews/      # Interview scheduling and responses
+├── messaging/       # In-app messages
+├── notifications/   # Notification model, views and live updates
+├── templates/       # Shared templates (base layout, etc.)
+├── jobportal/       # Project settings, URLs, ASGI config
+├── build.sh         # Build script used for deployment
+├── requirements.txt
+└── manage.py
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+## Setup
 
-1. Clone the repository:
+1. Clone the repository
+
    ```bash
    git clone https://github.com/venky2702001/job-portal.git
    cd job-portal
    ```
 
-2. Create a virtual environment and install dependencies:
+2. Create a virtual environment and install dependencies
+
    ```bash
    python -m venv venv
-   source venv/bin/activate   # On Windows: venv\Scripts\activate
+   source venv/bin/activate      # Windows: venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the project root with:
-   ```
-   DJANGO_SECRET_KEY=your-secret-key
-   DJANGO_DEBUG=True
-   DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+3. Configure the MySQL database and email settings in `jobportal/settings.py`. Keep credentials out of version control.
 
-   DB_NAME=your-db-name
-   DB_USER=your-db-user
-   DB_PASS=your-db-password
-   DB_HOST=localhost
-   DB_PORT=3306
+4. Apply migrations
 
-   EMAIL_HOST=smtp-relay.brevo.com
-   EMAIL_PORT=587
-   EMAIL_USE_TLS=True
-   EMAIL_USER=your-email-user
-   EMAIL_PASS=your-email-password
-   DEFAULT_FROM_EMAIL=your-from-email
-   ADMIN_EMAIL=your-admin-email
-   ```
-   `.env` is git-ignored — never commit real credentials.
-
-4. Run migrations:
    ```bash
    python manage.py migrate
    ```
 
-5. Create an admin account:
+5. (Optional) Create an admin user
+
    ```bash
    python manage.py createsuperuser
    ```
 
-6. Start the server:
+6. Start the development server
+
    ```bash
    python manage.py runserver
    ```
 
-7. Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser.
+7. Open http://127.0.0.1:8000/ in your browser.
 
 ---
 
-## 📸 Screenshots
-_(Add screenshots of the login, dashboards, and job listing pages here.)_
+## Screenshots
+
+| Candidate dashboard | Notification dropdown |
+| --- | --- |
+| ![Candidate dashboard](screenshots/candidate-dashboard.png) | ![Notification dropdown](screenshots/notifications.png) |
+
+| Notifications list | Recruiter view |
+| --- | --- |
+| ![Notifications list](screenshots/notifications-list.png) | ![Recruiter view](screenshots/recruiter-applications.png) |
 
 ---
 
-## 📊 Future Enhancements
-- Automated tests (unit + integration) and CI on GitHub Actions
-- Password reset / forgot-password flow
-- Pagination and richer filtering on the recruiter applications view
-- Dedicated outbound IP or transactional email API (to avoid provider IP-authorization blocks on redeploy)
-- Convert to Django REST Framework + a JS frontend for a fully decoupled API
+## Future Enhancements
+
+- Advanced job search filters (salary range, experience level)
+- Automated tests for views and WebSocket consumers
+- Redis channel layer for multi-instance deployments
 
 ---
 
-## 👨‍💻 Author
+## Author
+
 **Venkatesh K**
 
 - LinkedIn: [linkedin.com/in/venkateshk2702001](https://linkedin.com/in/venkateshk2702001)
